@@ -65,9 +65,7 @@ public class Annotate {
         Integer end_index = chunks[i].getEnd();
         // TODO use new functions and proper heads
         List<Term> chunkTerms = kaf.getTermsFromWFs(Arrays.asList(Arrays.copyOfRange(tokenIds, start_index, end_index)));
-        List<List<Term>> references = new ArrayList<List<Term>>();
-        references.add(chunkTerms);
-        kaf.createChunk(chunkTerms.get(chunkTerms.size()-1), type, chunkTerms);
+        kaf.createChunk(chunkTerms.get(chunkTerms.size()-1), type, chunkTerms);        
       }
     }
     return kaf.toString();
