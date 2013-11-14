@@ -9,10 +9,11 @@ developed by the IXA NLP Group (ixa.si.ehu.es).
 - Chunking models have been trained using the Apache OpenNLP API:
 
     + English perceptron models have been trained and evaluated using the CoNLL 2000 datasets.
-      Currently we obtain a performance of 92.58%.
+      Currently we obtain a performance of 92.97% vs 94.13 of the best system in that task
+      http://www.clips.ua.ac.be/conll2000/chunking/
 
     + Spanish Maximum Entropy models have been trained and evaluated using the Ancora corpus; it was randomly
-  divided in 90% for training (440K words) and 10% testing (70K words), obtaining a performance of X%.
+      divided in 90% for training (440K words) and 10% testing (70K words), obtaining a performance of X%.
 
 Contents
 ========
