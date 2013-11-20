@@ -2,7 +2,7 @@
 IXA-pipe-chunk
 ============
 
-ixa-pipe-chunk provides Chunking for English and Spanish.
+ixa-pipe-chunk provides Chunking for English basedon on the CoNLL 2000 datasets. .
 This module is part of IXA-Pipeline ("is a pipeline"), a multilingual NLP pipeline
 developed by the IXA NLP Group (ixa.si.ehu.es).
 
@@ -11,9 +11,6 @@ developed by the IXA NLP Group (ixa.si.ehu.es).
     + English perceptron models have been trained and evaluated using the CoNLL 2000 datasets.
       Currently we obtain a performance of 92.97% vs 94.13 of the best system in that task
       http://www.clips.ua.ac.be/conll2000/chunking/
-
-    + Spanish Maximum Entropy models have been trained and evaluated using the Ancora corpus; it was randomly
-      divided in 90% for training (440K words) and 10% testing (70K words), obtaining a performance of X%.
 
 Contents
 ========
