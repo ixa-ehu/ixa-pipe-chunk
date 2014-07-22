@@ -8,8 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
-
 import opennlp.tools.chunker.ChunkSample;
 import opennlp.tools.chunker.ChunkSampleStream;
 import opennlp.tools.chunker.Chunker;
@@ -17,15 +15,13 @@ import opennlp.tools.chunker.ChunkerEvaluator;
 import opennlp.tools.chunker.ChunkerFactory;
 import opennlp.tools.chunker.ChunkerME;
 import opennlp.tools.chunker.ChunkerModel;
-import opennlp.tools.cmdline.TerminateToolException;
-import opennlp.tools.postag.MutableTagDictionary;
-import opennlp.tools.postag.TagDictionary;
-import opennlp.tools.postag.WordTagSampleStream;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.TrainingParameters;
 
+import org.apache.commons.io.FileUtils;
+
 /**
- * Training POS taggers with Apache OpenNLP Machine Learning API.
+ * Training Chunk taggers with Apache OpenNLP Machine Learning API.
  * @author ragerri
  * @version 2014-07-07
  */
