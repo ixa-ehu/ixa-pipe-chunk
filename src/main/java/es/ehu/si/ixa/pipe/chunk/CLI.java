@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package ixa.pipe.chunk;
+package es.ehu.si.ixa.pipe.chunk;
 
 import ixa.kaflib.KAFDocument;
 
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
-import net.didion.jwnl.JWNLException;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;

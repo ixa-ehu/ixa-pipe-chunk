@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package ixa.pipe.chunk;
+package es.ehu.si.ixa.pipe.chunk;
 
 import java.io.InputStream;
 
