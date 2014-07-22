@@ -22,7 +22,6 @@ import ixa.kaflib.WF;
 
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,13 +35,16 @@ import opennlp.tools.util.Span;
  */
 public class Annotate {
 
-  private Chunk chunker;
+  private ChunkTagger chunker;
+  private String lang;
 
 
-  public Annotate(String lang) throws IOException {
-    Resources modelRetriever = new Resources();
-    InputStream chunkModel = modelRetriever.getChunkModel(lang);
-    chunker = new Chunk(chunkModel);
+  public Annotate(String aLang, String model) throws IOException {
+    if (model.equalsIgnoreCase("baseline")) {
+      System.err.println("Backing-off to default model!");
+    }
+    this.lang = aLang;
+    chunker = new ChunkTagger(lang, model);
   }
 
   public String chunkToKAF(KAFDocument kaf) throws IOException {

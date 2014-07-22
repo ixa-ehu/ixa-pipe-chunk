@@ -32,8 +32,7 @@ public class DefaultTrainer extends AbstractTrainer {
    *           the io exception for input data
    */
   public DefaultTrainer(final String lang, final String trainData,
-      final String testData, final String dictPath, final int dictCutOff,
-      final int beamsize) throws IOException {
+      final String testData, final String dictPath, final int beamsize) throws IOException {
     super(lang, trainData, testData, dictPath, beamsize);
 
     setChunkerFactory(new ChunkerFactory());
