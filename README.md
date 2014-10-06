@@ -1,5 +1,4 @@
-
-IXA-pipe-chunk
+ixa-pipe-chunk
 ============
 
 ixa-pipe-chunk provides Chunking for English basedon on the CoNLL 2000 datasets. .
@@ -102,7 +101,7 @@ and untar the archive into the src/main/resources directory:
 
 ````shell
 cd ixa-pipe-chunk/src/main/resources
-wget http://ixa2.si.ehu.es/ragerri/ixa-pipeline-models/chunk-resources.tgz
+wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-resources.tgz
 tar xvzf chunk-resources.tgz
 ````
 If you change the name of the models you will need to modify also the source code in Models.java.
