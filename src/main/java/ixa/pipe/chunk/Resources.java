@@ -14,15 +14,38 @@
    limitations under the License.
  */
 
+
 package ixa.pipe.chunk;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Resources {
 
   private InputStream chunkModel;
 
 
+  public InputStream getChunkModelFromDir(String folder,String cmdOption) {
+
+    if (cmdOption.equals("en")) {
+        try {
+            chunkModel = new FileInputStream(new File(folder+"en-chunk.bin"));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Resources.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    if (cmdOption.equals("es")) {
+      chunkModel = getClass().getResourceAsStream(folder+"es-chunk.bin");
+    }
+    return chunkModel;
+  }
+  
+  
   public InputStream getChunkModel(String cmdOption) {
 
     if (cmdOption.equals("en")) {
