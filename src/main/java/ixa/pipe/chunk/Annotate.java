@@ -36,7 +36,7 @@ import opennlp.tools.util.Span;
  */
 public class Annotate {
 
-  private Chunk chunker;
+  private final Chunk chunker;
 
 
   public Annotate(String lang) throws IOException {
