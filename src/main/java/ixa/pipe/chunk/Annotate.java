@@ -44,7 +44,7 @@ public class Annotate {
 
     public Annotate(String modelsDir, String lang) throws IOException {
         Resources modelRetriever = new Resources();
-        InputStream chunkModel = modelRetriever.getChunkModelFromDir(dir, lang);
+        InputStream chunkModel = modelRetriever.getChunkModelFromDir(modelsDir, lang);
         chunker = new Chunk(chunkModel);
     }
 
