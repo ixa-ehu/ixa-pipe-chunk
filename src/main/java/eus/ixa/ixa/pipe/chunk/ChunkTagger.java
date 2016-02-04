@@ -13,7 +13,7 @@
    limitations under the License.
  */
 
-package es.ehu.si.ixa.pipe.chunk;
+package eus.ixa.ixa.pipe.chunk;
 
 import java.io.FileInputStream;
 import java.io.IOException;

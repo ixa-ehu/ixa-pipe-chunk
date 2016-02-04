@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package es.ehu.si.ixa.pipe.chunk.eval;
+package eus.ixa.ixa.pipe.chunk.eval;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import opennlp.tools.cmdline.chunker.ChunkEvaluationErrorListener;
 import opennlp.tools.cmdline.chunker.ChunkerDetailedFMeasureListener;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.eval.EvaluationMonitor;
-import es.ehu.si.ixa.pipe.chunk.train.InputOutputUtils;
+import eus.ixa.ixa.pipe.chunk.train.InputOutputUtils;
 
 /**
  * Evaluation class mostly inspired by {@link ChunkerEvaluator}.
@@ -47,11 +47,11 @@ public class Evaluate {
    */
   private ObjectStream<ChunkSample> testSamples;
   /**
-   * Static instance of {@link TokenNameFinderModel}.
+   * Static instance of {@link ChunkerModel}.
    */
   private static ChunkerModel chunkerModel;
   /**
-   * An instance of the probabilistic {@link POSTaggerME}.
+   * An instance of the probabilistic {@link ChunkerME}.
    */
   private ChunkerME chunkerTagger;
 
@@ -62,15 +62,13 @@ public class Evaluate {
    *          the reference data to evaluate against
    * @param model
    *          the model to be evaluated
-   * @param beamsize
-   *          the beam size for decoding
    * @throws IOException
    *           if input data not available
    */
   public Evaluate(final String testData, final String model)
       throws IOException {
 
-    ObjectStream<String> testStream = InputOutputUtils.readInputData(testData);
+    ObjectStream<String> testStream = InputOutputUtils.readFileIntoMarkableStreamFactory(testData);
     testSamples = new ChunkSampleStream(testStream);
     InputStream trainedModelInputStream = null;
     try {
@@ -94,7 +92,6 @@ public class Evaluate {
 
   /**
    * Evaluate and print precision, recall and F measure.
-   *
    * @throws IOException
    *           if test corpus not loaded
    */
@@ -106,9 +103,6 @@ public class Evaluate {
 
   /**
    * Detail evaluation of a model, outputting the report a file.
-   *
-   * @param outputFile
-   *          the file to output the report.
    * @throws IOException
    *           the io exception if not output file provided
    */

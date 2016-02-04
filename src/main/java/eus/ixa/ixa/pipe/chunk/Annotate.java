@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Rodrigo Agerri
+ * Copyright 2016 Rodrigo Agerri
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package es.ehu.si.ixa.pipe.chunk;
+package eus.ixa.ixa.pipe.chunk;
 
 import ixa.kaflib.KAFDocument;
 import ixa.kaflib.Term;
@@ -50,7 +50,7 @@ public class Annotate {
   public String chunkToKAF(KAFDocument kaf) throws IOException {
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getTermsByWFs(sentence);
+      List<Term> terms = kaf.getTermsBySent(kaf.getSentence());
       /* Get an array of token forms from a list of WF objects. */
       String posTags[] = new String[terms.size()];
       String tokens[] = new String[sentence.size()];
@@ -78,7 +78,7 @@ public class Annotate {
     List<ChunkSample> chunkList = new ArrayList<ChunkSample>();
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getTermsByWFs(sentence);
+      List<Term> terms = kaf.getSentenceTerms(kaf.getSentence());
       /* Get an array of token forms from a list of WF objects. */
       String posTags[] = new String[terms.size()];
       String tokens[] = new String[sentence.size()];
