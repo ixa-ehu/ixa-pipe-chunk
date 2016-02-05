@@ -17,7 +17,8 @@ package eus.ixa.ixa.pipe.chunk;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import opennlp.tools.chunker.ChunkerME;
@@ -28,76 +29,74 @@ public class ChunkTagger {
 
   private ChunkerME chunkerTagger;
   private static ConcurrentHashMap<String, ChunkerModel> chunkerModels = new ConcurrentHashMap<String, ChunkerModel>();
-  private String lang;
-  
+
   /**
    * Construct a chunktagger.
-   * @param aLang the language
-   * @param model the model
+   * 
+   * @param aLang
+   *          the language
+   * @param model
+   *          the model
    */
-  public ChunkTagger(final String aLang, final String model) {
-    this.lang = aLang;
-    ChunkerModel posModel = loadModel(model);
+  public ChunkTagger(Properties properties) {
+    String lang = properties.getProperty("language");
+    final String model = properties.getProperty("model");
+    ChunkerModel posModel = loadModel(lang, model);
     chunkerTagger = new ChunkerME(posModel);
   }
 
   /**
-   * Load model statically only if a model for the specified language is not already there.
-   * @param model the model type
-   * @return the model
+   * Loads statically the probabilistic model. Every instance of this finder
+   * will share the same model.
+   * 
+   * @param lang
+   *          the language
+   * @param model
+   *          the model to be loaded
+   * @return the model as a {@link ChunkerModel} object
    */
-  private ChunkerModel loadModel(final String model) {
-    InputStream trainedModelInputStream = null;
+  private ChunkerModel loadModel(final String lang, final String model) {
+    final long lStartTime = new Date().getTime();
     try {
-      if (!chunkerModels.containsKey(lang)) {
-        if (model.equalsIgnoreCase("baseline")) {
-          trainedModelInputStream = getBaselineModelStream(model);
-        } else {
-          trainedModelInputStream = new FileInputStream(model);
+      synchronized (chunkerModels) {
+        if (!chunkerModels.containsKey(lang)) {
+          chunkerModels.put(lang, new ChunkerModel(new FileInputStream(model)));
         }
-        chunkerModels.put(lang, new ChunkerModel(trainedModelInputStream));
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
-    } finally {
-      if (trainedModelInputStream != null) {
-        try {
-          trainedModelInputStream.close();
-        } catch (IOException e) {
-          System.err.println("Could not load model!");
-        }
-      }
     }
+    final long lEndTime = new Date().getTime();
+    final long difference = lEndTime - lStartTime;
+    System.err.println("ixa-pipe-chunk model loaded in: " + difference
+        + " miliseconds ... [DONE]");
     return chunkerModels.get(lang);
   }
 
   /**
-   * Back-off to baseline models for a language.
-   * @param model the model type
-   * @return the back-off model
+   * Get chunks into an String array.
+   * 
+   * @param tokens
+   *          the tokens
+   * @param posTags
+   *          the pos tags
+   * @return the array containing the chunks
    */
-  private InputStream getBaselineModelStream(final String model) {
-    InputStream trainedModelInputStream = null;
-    if (lang.equalsIgnoreCase("en")) {
-      trainedModelInputStream = getClass().getResourceAsStream(
-          "/en/en-chunk-perceptron-c0-b3-dev.bin");
-    }
-    if (lang.equalsIgnoreCase("es")) {
-      trainedModelInputStream = getClass().getResourceAsStream(
-          "/en/en-chunk-perceptron-c0-b3.bin");
-    }
-    return trainedModelInputStream;
-  }
-
-
- 
-
-  public String[] chunkToString(String[] tokens, String[] posTags) { 
+  public String[] chunkToString(String[] tokens, String[] posTags) {
     String[] chunks = chunkerTagger.chunk(tokens, posTags);
     return chunks;
   }
-  
-   public Span[] chunk(String[] tokens, String[] posTags) {
+
+  /**
+   * Get chunks into an Span array.
+   * 
+   * @param tokens
+   *          the tokens
+   * @param posTags
+   *          the pos tags
+   * @return the chunk spans
+   */
+  public Span[] chunk(String[] tokens, String[] posTags) {
     Span[] chunks = chunkerTagger.chunkAsSpans(tokens, posTags);
     return chunks;
   }

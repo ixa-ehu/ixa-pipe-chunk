@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import opennlp.tools.chunker.ChunkSample;
 import opennlp.tools.util.Span;
@@ -36,15 +37,10 @@ import opennlp.tools.util.Span;
 public class Annotate {
 
   private ChunkTagger chunker;
-  private String lang;
 
 
-  public Annotate(String aLang, String model) throws IOException {
-    if (model.equalsIgnoreCase("baseline")) {
-      System.err.println("Backing-off to default model!");
-    }
-    this.lang = aLang;
-    chunker = new ChunkTagger(lang, model);
+  public Annotate(Properties properties) throws IOException {
+    chunker = new ChunkTagger(properties);
   }
 
   public String chunkToKAF(KAFDocument kaf) throws IOException {
