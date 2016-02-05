@@ -169,7 +169,7 @@ public class CLI {
     } catch (ArgumentParserException e) {
       argParser.handleError(e);
       System.out.println("Run java -jar target/ixa-pipe-chunk-" + version
-          + ".jar (tag|train|eval|cross|server|client) -help for details");
+          + ".jar (tag|train|eval|cross) -help for details");
       System.exit(1);
     }
   }

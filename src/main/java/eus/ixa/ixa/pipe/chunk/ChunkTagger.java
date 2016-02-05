@@ -31,12 +31,9 @@ public class ChunkTagger {
   private static ConcurrentHashMap<String, ChunkerModel> chunkerModels = new ConcurrentHashMap<String, ChunkerModel>();
 
   /**
-   * Construct a chunktagger.
+   * Construct a chunk tagger.
    * 
-   * @param aLang
-   *          the language
-   * @param model
-   *          the model
+   * @param properties the language and model
    */
   public ChunkTagger(Properties properties) {
     String lang = properties.getProperty("language");
