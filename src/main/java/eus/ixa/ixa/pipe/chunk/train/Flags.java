@@ -32,16 +32,6 @@ public class Flags {
 
   private Flags() {
   }
-  
-  public static String getComponent(final TrainingParameters params) {
-    String component = null;
-    if (params.getSettings().get("Component") == null) {
-      componentException();
-    } else {
-      component = params.getSettings().get("Component");
-    }
-    return component;
-  }
 
   public static String getLanguage(final TrainingParameters params) {
     String lang = null;
@@ -107,11 +97,6 @@ public class Flags {
     return folds;
   }
 
-  public static void componentException() {
-    System.err
-        .println("Please provide a component name in the Component field in the parameters file!");
-    System.exit(1);
-  }
   public static void modelException() {
     System.err
         .println("Please provide a model in the OutputModel field in the parameters file!");
@@ -133,18 +118,6 @@ public class Flags {
   public static void corpusFormatException() {
     System.err
         .println("Please fill in CorpusFormat field in the parameters file!");
-    System.exit(1);
-  }
-
-  public static void dictionaryException() {
-    System.err
-        .println("You need to set the --dictPath option to the dictionaries directory to use the dictTag option!");
-    System.exit(1);
-  }
-
-  public static void dictionaryFeaturesException() {
-    System.err
-        .println("You need to specify the DictionaryFeatures in the parameters file to use the DictionaryPath!");
     System.exit(1);
   }
 
