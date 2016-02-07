@@ -46,15 +46,16 @@ public class Annotate {
   public String chunkToKAF(KAFDocument kaf) throws IOException {
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getTermsBySent(kaf.getSentence());
       /* Get an array of token forms from a list of WF objects. */
-      String posTags[] = new String[terms.size()];
+      String posTags[] = new String[sentence.size()];
       String tokens[] = new String[sentence.size()];
       String[] tokenIds = new String[sentence.size()];
       for (int i = 0; i < sentence.size(); i++) {
         tokens[i] = sentence.get(i).getForm();
         tokenIds[i] = sentence.get(i).getId();
+        List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
+        System.err.println(tokens[i] + " " + posTags[i]);
       }
       Span[] chunks = chunker.chunk(tokens, posTags);
       for (int i = 0; i < chunks.length; i++) {
@@ -74,12 +75,12 @@ public class Annotate {
     List<ChunkSample> chunkList = new ArrayList<ChunkSample>();
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getSentenceTerms(kaf.getSentence());
       /* Get an array of token forms from a list of WF objects. */
-      String posTags[] = new String[terms.size()];
+      String posTags[] = new String[sentence.size()];
       String tokens[] = new String[sentence.size()];
       for (int i = 0; i < sentence.size(); i++) {
         tokens[i] = sentence.get(i).getForm();
+        List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
       }
       String[] chunks = chunker.chunkToString(tokens, posTags);

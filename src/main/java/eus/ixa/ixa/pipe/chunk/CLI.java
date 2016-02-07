@@ -29,7 +29,6 @@ import java.io.OutputStreamWriter;
 import java.util.Properties;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -241,10 +240,12 @@ public class CLI {
     annotateParser.addArgument("-l", "--lang").choices("en").required(false)
         .help("Choose a language to perform annotation with ixa-pipe-chunk.");
     annotateParser
-        .addArgument("--conll")
-        .action(Arguments.storeFalse())
+        .addArgument("-o", "--outputFormat")
+        .required(false)
+        .choices("naf","conll")
+        .setDefault("naf")
         .help(
-            "Do not print tokens in NAF format, but conll tabulated format.\n");
+            "Choose between NAF and conll format; it defaults to NAF.\n");
   }
 
   /**
