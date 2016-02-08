@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Rodrigo Agerri
+ * Copyright 2016 Rodrigo Agerri
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
    limitations under the License.
  */
 
-package ixa.pipe.chunk;
+package eus.ixa.ixa.pipe.chunk;
 
 import ixa.kaflib.KAFDocument;
 import ixa.kaflib.Term;
@@ -22,10 +22,10 @@ import ixa.kaflib.WF;
 
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import opennlp.tools.chunker.ChunkSample;
 import opennlp.tools.util.Span;
@@ -36,26 +36,24 @@ import opennlp.tools.util.Span;
  */
 public class Annotate {
 
-  private Chunk chunker;
+  private ChunkTagger chunker;
 
 
-  public Annotate(String lang) throws IOException {
-    Resources modelRetriever = new Resources();
-    InputStream chunkModel = modelRetriever.getChunkModel(lang);
-    chunker = new Chunk(chunkModel);
+  public Annotate(Properties properties) throws IOException {
+    chunker = new ChunkTagger(properties);
   }
 
   public String chunkToKAF(KAFDocument kaf) throws IOException {
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getTermsByWFs(sentence);
       /* Get an array of token forms from a list of WF objects. */
-      String posTags[] = new String[terms.size()];
+      String posTags[] = new String[sentence.size()];
       String tokens[] = new String[sentence.size()];
       String[] tokenIds = new String[sentence.size()];
       for (int i = 0; i < sentence.size(); i++) {
         tokens[i] = sentence.get(i).getForm();
         tokenIds[i] = sentence.get(i).getId();
+        List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
       }
       Span[] chunks = chunker.chunk(tokens, posTags);
@@ -76,12 +74,12 @@ public class Annotate {
     List<ChunkSample> chunkList = new ArrayList<ChunkSample>();
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
-      List<Term> terms = kaf.getTermsByWFs(sentence);
       /* Get an array of token forms from a list of WF objects. */
-      String posTags[] = new String[terms.size()];
+      String posTags[] = new String[sentence.size()];
       String tokens[] = new String[sentence.size()];
       for (int i = 0; i < sentence.size(); i++) {
         tokens[i] = sentence.get(i).getForm();
+        List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
       }
       String[] chunks = chunker.chunkToString(tokens, posTags);

@@ -1,49 +1,171 @@
+
 ixa-pipe-chunk
 ============
 
-ixa-pipe-chunk provides Chunking for English basedon on the CoNLL 2000 datasets. .
-This module is part of IXA-Pipeline ("is a pipeline"), a multilingual NLP pipeline
-developed by the IXA NLP Group (ixa.si.ehu.es).
+ixa-pipe-chunk is a chunker currently offering pre-trained models for English. ixa-pipe-chunk is part of IXA pipes, a multilingual set of NLP tools developed by the IXA NLP Group [http://ixa2.si.ehu.es/ixa-pipes]. **Current version is 1.1.0**.
 
-- Chunking models have been trained using the Apache OpenNLP API:
+Please go to [http://ixa2.si.ehu.es/ixa-pipes] for general information about the IXA
+pipes tools but also for **official releases, including source code and binary
+packages for all the tools in the IXA pipes toolkit**.
 
-    + English perceptron models have been trained and evaluated using the CoNLL 2000 datasets.
-      Currently we obtain a performance of 92.97% vs 94.13 of the best system in that task
-      http://www.clips.ua.ac.be/conll2000/chunking/
+This document is intended to be the **usage guide of ixa-pipe-chunk**. If you really need to clone
+and install this repository instead of using the releases provided in
+[http://ixa2.si.ehu.es/ixa-pipes], please scroll down to the end of the document for
+the [installation instructions](#installation).
 
-Contents
-========
+## TABLE OF CONTENTS
+
+1. [Overview of ixa-pipe-chunk](#overview)
+  + [Distributed models](#models)
+2. [Usage of ixa-pipe-chunk](#usage)
+  + [Training your own models](#training)
+  + [Evaluation](#evaluation)
+3. [API via Maven Dependency](#api)
+4. [Git installation](#installation)
+5. [Adding your language](#extend)
+
+## OVERVIEW
+
+ixa-pipe-chunk provides Perceptron models (Collins 2002) for chunking. To avoid duplication of efforts, we use and contribute to the machine learning API provided by the [Apache OpenNLP project](http://opennlp.apache.org).
+
+**ixa-pipe-chunk is distributed under Apache License version 2.0 (see LICENSE.txt for details)**.
+
+### Models
+
++ Latest model: [chunk-models-1.1.0](http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models-1.1.0.tar.gz).
+
++ **English Chunk Models**:
+  + CoNLL 2000 data: **en-perceptron-conll00.bin**: 92.96
+
+## USAGE
+
+ixa-pipe-chunk provides 4 basic functionalities:
+
+1. **tag**: reads a NAF document containing *wf* elements and creates *term* elements with the morphological information.
+2. **train**: trains new models for with several options
+   available (read trainParams.properties file for details).
+3. **eval**: evaluates a trained model with a given test set.
+4. **cross**: perform cross-validation evaluation.
+
+Each of these functionalities are accessible by adding (tag|train|eval|cross) as a
+subcommand to ixa-pipe-chunk-$version.jar. Please read below and check the -help
+parameter:
+
+````shell
+java -jar target/ixa-pipe-chunk-$version.jar (tag|train|eval|cross) -help
+````
+
+### Tagging
+
+If you are in hurry, just execute:
+
+````shell
+cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version.jar tag -m model.bin
+````
+
+If you want to know more, please follow reading.
+
+ixa-pipe-chunk reads NAF documents containing *wf* elements via standard input and outputs NAF
+through standard output. The NAF format specification is here:
+
+(http://wordpress.let.vupr.nl/naf/)
+
+You can get the necessary input for ixa-pipe-pos by piping it with
+[ixa-pipe-tok](https://github.com/ixa-ehu/ixa-pipe-tok) and [ixa-pipe-pos](https://github.com/ixa-ehu/ixa-pipe-pos)
+
+There are several options to tag with ixa-pipe-chunk:
+
++ **model**: it is **required** to provide the model to do the tagging.
++ **lang**: choose between en and es. If no language is chosen, the one specified
+  in the NAF header will be used.
+
+**Tagging Example**:
+
+````shell
+cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version.jar tag -m model.bin
+````
+
+### Training
+
+To train a new model, you just need to pass a training parameters file as an
+argument. Every training option is documented in the template trainParams.properties file.
+
+**Example**:
+
+````shell
+java -jar target/ixa.pipe.chunk-$version.jar train -p trainParams.properties
+````
+
+### Evaluation
+
+To evaluate a trained model, the eval subcommand provides the following
+options:
+
++ **model**: input the name of the model to evaluate.
++ **testSet**: testset to evaluate the model.
++ **evalReport**: choose the detail in displaying the results:
+  + **brief**: it just prints the word accuracy.
+  + **detailed**: detailed report with confusion matrixes and so on.
+  + **error**: print to stderr all the false positives.
+
+**Example**:
+
+````shell
+java -jar target/ixa.pipe.chunk-$version.jar eval -m test-chunk.bin -l en -t test.data
+````
+
+## API
+
+The easiest way to use ixa-pipe-chunk programatically is via Apache Maven. Add
+this dependency to your pom.xml:
+
+````shell
+<dependency>
+    <groupId>eus.ixa</groupId>
+    <artifactId>ixa-pipe-chunk</artifactId>
+    <version>1.1.0</version>
+</dependency>
+````
+
+## JAVADOC
+
+The javadoc of the module is located here:
+
+````shell
+ixa-pipe-chunk/target/ixa-pipe-chunk-$version-javadoc.jar
+````
+## Module contents
 
 The contents of the module are the following:
 
     + formatter.xml           Apache OpenNLP code formatter for Eclipse SDK
     + pom.xml                 maven pom file which deals with everything related to compilation and execution of the module
-    + src/                    java source code of the module
+    + src/                    java source code of the module and required resources
+    + trainParams.properties      A template properties file containing documention
     + Furthermore, the installation process, as described in the README.md, will generate another directory:
     target/                 it contains binary executable and other directories
 
-INSTALLATION
-============
+
+## INSTALLATION
 
 Installing the ixa-pipe-chunk requires the following steps:
 
-If you already have installed in your machine JDK7 and MAVEN 3, please go to step 3
+If you already have installed in your machine the Java 1.7+ and MAVEN 3, please go to step 3
 directly. Otherwise, follow these steps:
 
-1. Install JDK 1.7
--------------------
+### 1. Install JDK 1.7 or JDK 1.8
 
-If you do not install JDK 1.7 in a default location, you will probably need to configure the PATH in .bashrc or .bash_profile:
+If you do not install JDK 1.7+ in a default location, you will probably need to configure the PATH in .bashrc or .bash_profile:
 
 ````shell
-export JAVA_HOME=/yourpath/local/java7
+export JAVA_HOME=/yourpath/local/java8
 export PATH=${JAVA_HOME}/bin:${PATH}
 ````
 
 If you use tcsh you will need to specify it in your .login as follows:
 
 ````shell
-setenv JAVA_HOME /usr/java/java17
+setenv JAVA_HOME /usr/java/java8
 setenv PATH ${JAVA_HOME}/bin:${PATH}
 ````
 
@@ -53,10 +175,9 @@ If you re-login into your shell and run the command
 java -version
 ````
 
-You should now see that your jdk is 1.7
+You should now see that your JDK is 1.7+
 
-2. Install MAVEN 3
-------------------
+### 2. Install MAVEN 3
 
 Download MAVEN 3 from
 
@@ -84,97 +205,52 @@ If you re-login into your shell and run the command
 mvn -version
 ````
 
-You should see reference to the MAVEN version you have just installed plus the JDK 6 that is using.
+You should see reference to the MAVEN version you have just installed plus the JDK 7 that is using.
 
-3. Get module source code
---------------------------
+### 3. Get module source code
 
-````shell
-git clone git@github.com:ixa-ehu/ixa-pipe-chunk.git
-````
-
-4. Download models and other resources
---------------------------------------
-
-The Chunker needs the trained models. Download the models
-and untar the archive into the src/main/resources directory:
+If you must get the module source code from here do this:
 
 ````shell
-cd ixa-pipe-chunk/src/main/resources
-wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-resources.tgz
-tar xvzf chunk-resources.tgz
+git clone https://github.com/ixa-ehu/ixa-pipe-chunk
 ````
-If you change the name of the models you will need to modify also the source code in Models.java.
 
-5. Move into main directory
----------------------------
+### 4. Download the models
+
+Download the models:
+
+````shell
+wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models.tgz
+tar xvzf chunk-models.tar.gz
+````
+
+### 5. Compile
 
 ````shell
 cd ixa-pipe-chunk
-````
-
-6. Install module using maven
------------------------------
-
-````shell
 mvn clean package
 ````
 
 This step will create a directory called target/ which contains various directories and files.
 Most importantly, there you will find the module executable:
 
-ixa-pipe-chunk-1.0.jar
+ixa-pipe-chunk-$version.jar
 
 This executable contains every dependency the module needs, so it is completely portable as long
-as you have a JVM 1.6 installed.
+as you have a JVM 1.7 or newer installed.
 
-To install the module in the local maven repository, usually located at ~/.m2/, execute:
+To install the module in the local maven repository, usually located in ~/.m2/, execute:
 
 ````shell
 mvn clean install
 ````
 
-7. USING ixa-pipe-chunk
-=====================
-
-The program accepts tokenized and POS-tagged text in KAF format as standard input and outputs KAF.
-
-https://github.com/opener-project/kaf/wiki/KAF-structure-overview
-
-You can get the required input by piping ixa-pipe-tok and ixa-pipe-pos before. To run the program execute:
-
-````shell
-cat input.kaf | java -jar $PATH/target/ixa-pipe-chunk-1.0.jar
-````
-
-See
-
-````shell
-java -jar $PATH/target/ixa-pipe-chunk-1.0.jar -help
-````
-
-for options running the module.
-
-
-GENERATING JAVADOC
-==================
-
-You can also generate the javadoc of the module by executing:
-
-````shell
-mvn javadoc:jar
-````
-
-Which will create a jar file target/ixa-pipe-chunk-1.0-javadoc.jar
-
-
-Contact information
-===================
+## Contact information
 
 ````shell
 Rodrigo Agerri
 IXA NLP Group
 University of the Basque Country (UPV/EHU)
 E-20018 Donostia-San Sebastián
-rodrigo.agerri@ehu.es
+rodrigo.agerri@ehu.eus
 ````
