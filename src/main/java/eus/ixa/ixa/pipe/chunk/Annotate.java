@@ -55,7 +55,6 @@ public class Annotate {
         tokenIds[i] = sentence.get(i).getId();
         List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
-        System.err.println(tokens[i] + " " + posTags[i]);
       }
       Span[] chunks = chunker.chunk(tokens, posTags);
       for (int i = 0; i < chunks.length; i++) {
