@@ -36,8 +36,15 @@
   <build>
     <plugins>
       <plugin>
-<<<<<<< HEAD
-=======
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <compilerargument>-verbose</compilerargument>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
         <version>1.6.3</version>
@@ -49,7 +56,6 @@
         </configuration>
       </plugin>
       <plugin>
->>>>>>> dev
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
@@ -59,8 +65,6 @@
         </configuration>
       </plugin>
       <plugin>
-<<<<<<< HEAD
-=======
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.2.1</version>
@@ -107,7 +111,6 @@
         </executions>
       </plugin>
       <plugin>
->>>>>>> dev
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.3</version>
         <executions>
