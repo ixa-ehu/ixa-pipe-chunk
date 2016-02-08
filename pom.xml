@@ -222,4 +222,5 @@
 		<connection>scm:git:git@github.com:ixa-ehu/ixa-pipe-chunk.git</connection>
 		<developerConnection>scm:git:git@github.com:ixa-ehu/ixa-pipe-chunk.git</developerConnection>
 	</scm>
+	<description>IXA pipes chunker</description>
 </project>
