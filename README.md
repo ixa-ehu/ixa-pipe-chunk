@@ -22,7 +22,6 @@ the [installation instructions](#installation).
   + [Evaluation](#evaluation)
 3. [API via Maven Dependency](#api)
 4. [Git installation](#installation)
-5. [Adding your language](#extend)
 
 ## OVERVIEW
 
@@ -220,7 +219,7 @@ git clone https://github.com/ixa-ehu/ixa-pipe-chunk
 Download the models:
 
 ````shell
-wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models.tgz
+wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models.tar.gz
 tar xvzf chunk-models.tar.gz
 ````
 
