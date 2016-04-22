@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Rodrigo Agerri
+ * Copyright 2016 Rodrigo Agerri
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import ixa.kaflib.KAFDocument;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,29 +33,18 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import net.sourceforge.argparse4j.inf.Subparsers;
-import opennlp.tools.chunker.ChunkerModel;
-import opennlp.tools.cmdline.CmdLineUtil;
-import opennlp.tools.util.TrainingParameters;
 
 import org.jdom2.JDOMException;
 
 import com.google.common.io.Files;
 
-import eus.ixa.ixa.pipe.chunk.eval.CrossValidator;
-import eus.ixa.ixa.pipe.chunk.eval.Evaluate;
-import eus.ixa.ixa.pipe.chunk.train.DefaultTrainer;
-import eus.ixa.ixa.pipe.chunk.train.Flags;
-import eus.ixa.ixa.pipe.chunk.train.InputOutputUtils;
-import eus.ixa.ixa.pipe.chunk.train.Trainer;
-
 /**
- * Main class of ixa-pipe-chunk, the chunker of ixa-pipes
- * (ixa2.si.ehu.es/ixa-pipes). The annotate method is the main entry point.
+ * Main class of ixa-pipe-chunk which uses ixa-pipe-ml API for chunking. The
+ * annotate method is the main entry point.
  * 
  * @author ragerri
- * @version 2014-07-08
+ * @version 2016-04-22
  */
-
 public class CLI {
 
   /**
@@ -79,7 +67,7 @@ public class CLI {
    * The argument parser.
    */
   private ArgumentParser argParser = ArgumentParsers.newArgumentParser(
-      "ixa-pipe-chunk-" + version + ".jar").description(
+      "ixa-pipe-chunk-" + version + "-exec.jar").description(
       "ixa-pipe-chunk-" + version
           + " is a multilingual chunker developed by IXA NLP Group.\n");
   /**
@@ -91,22 +79,6 @@ public class CLI {
    * The parser that manages the tagging sub-command.
    */
   private Subparser annotateParser;
-  /**
-   * The parser that manages the training sub-command.
-   */
-  private Subparser trainParser;
-  /**
-   * The parser that manages the evaluation sub-command.
-   */
-  private Subparser evalParser;
-  /**
-   * The parser that manages the cross validation sub-command.
-   */
-  private final Subparser crossValidateParser;
-  /**
-   * Default beam size for decoding.
-   */
-  public static final int DEFAULT_BEAM_SIZE = 3;
 
   /**
    * Construct a CLI object with the three sub-parsers to manage the command
@@ -115,13 +87,6 @@ public class CLI {
   public CLI() {
     annotateParser = subParsers.addParser("tag").help("Tagging CLI");
     loadAnnotateParameters();
-    trainParser = subParsers.addParser("train").help("Training CLI");
-    loadTrainingParameters();
-    evalParser = subParsers.addParser("eval").help("Evaluation CLI");
-    loadEvalParameters();
-    this.crossValidateParser = this.subParsers.addParser("cross").help(
-        "Cross validation CLI");
-    loadCrossValidateParameters();
   }
 
   /**
@@ -158,17 +123,11 @@ public class CLI {
       System.err.println("CLI options: " + parsedArguments);
       if (args[0].equals("tag")) {
         annotate(System.in, System.out);
-      } else if (args[0].equals("eval")) {
-        eval();
-      } else if (args[0].equals("train")) {
-        train();
-      } else if (args[0].equals("cross")) {
-        crossValidate();
       }
     } catch (ArgumentParserException e) {
       argParser.handleError(e);
       System.out.println("Run java -jar target/ixa-pipe-chunk-" + version
-          + ".jar (tag|train|eval|cross) -help for details");
+          + "-exec.jar (tag|server|client) -help for details");
       System.exit(1);
     }
   }
@@ -189,13 +148,8 @@ public class CLI {
   public final void annotate(final InputStream inputStream,
       final OutputStream outputStream) throws IOException, JDOMException {
 
-    String model;
-    if (parsedArguments.get("model") == null) {
-      model = "baseline";
-    } else {
-      model = parsedArguments.getString("model");
-    }
-    String outputFormat = parsedArguments.get("outputFormat");
+    final String model = parsedArguments.getString("model");
+    final String outputFormat = parsedArguments.get("outputFormat");
     BufferedReader breader = null;
     BufferedWriter bwriter = null;
     breader = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
@@ -208,7 +162,6 @@ public class CLI {
       lang = this.parsedArguments.getString("language");
       if (!kaf.getLang().equalsIgnoreCase(lang)) {
         System.err.println("Language parameter in NAF and CLI do not match!!");
-        System.exit(1);
       }
     } else {
       lang = kaf.getLang();
@@ -216,8 +169,8 @@ public class CLI {
     final Properties properties = setAnnotateProperties(model, lang);
     final Annotate annotator = new Annotate(properties);
     // annotate to KAF
-    if (outputFormat.equalsIgnoreCase("conll")) {
-      bwriter.write(annotator.annotateChunksToCoNLL(kaf));
+    if (outputFormat.equalsIgnoreCase("conll00")) {
+      bwriter.write(annotator.annotateChunksToCoNLL00(kaf));
     } else {
       KAFDocument.LinguisticProcessor newLp = kaf.addLinguisticProcessor(
           "terms", "ixa-pipe-chunk-" + Files.getNameWithoutExtension(model)
@@ -239,106 +192,9 @@ public class CLI {
         .help("Choose model to perform chunk tagging.");
     annotateParser.addArgument("-l", "--lang").choices("en").required(false)
         .help("Choose a language to perform annotation with ixa-pipe-chunk.");
-    annotateParser
-        .addArgument("-o", "--outputFormat")
-        .required(false)
-        .choices("naf","conll")
-        .setDefault("naf")
-        .help(
-            "Choose between NAF and conll format; it defaults to NAF.\n");
-  }
-
-  /**
-   * Main entry point for training.
-   * 
-   * @throws IOException
-   *           throws an exception if errors in the various file inputs.
-   */
-  public final void train() throws IOException {
-    // load training parameters file
-    final String paramFile = this.parsedArguments.getString("params");
-    final TrainingParameters params = InputOutputUtils
-        .loadTrainingParameters(paramFile);
-    String outModel = null;
-    if (params.getSettings().get("OutputModel") == null
-        || params.getSettings().get("OutputModel").length() == 0) {
-      outModel = Files.getNameWithoutExtension(paramFile) + ".bin";
-      params.put("OutputModel", outModel);
-    } else {
-      outModel = Flags.getModel(params);
-    }
-    final Trainer chunkerTrainer = new DefaultTrainer(params);
-    final ChunkerModel trainedModel = chunkerTrainer.train(params);
-    CmdLineUtil.writeModel("ixa-pipe-chunk", new File(outModel), trainedModel);
-  }
-
-  /**
-   * Loads the parameters for the training CLI.
-   */
-  private void loadTrainingParameters() {
-    this.trainParser.addArgument("-p", "--params").required(true)
-        .help("Load the training parameters file\n");
-  }
-
-  /**
-   * Main entry point for evaluation.
-   * 
-   * @throws IOException
-   *           the io exception thrown if errors with paths are present
-   */
-  public final void eval() throws IOException {
-    String testFile = parsedArguments.getString("testSet");
-    String model = parsedArguments.getString("model");
-
-    Evaluate evaluator = new Evaluate(testFile, model);
-    if (parsedArguments.getString("evalReport") != null) {
-      if (parsedArguments.getString("evalReport").equalsIgnoreCase("brief")) {
-        evaluator.evaluate();
-      } else if (parsedArguments.getString("evalReport").equalsIgnoreCase(
-          "error")) {
-        evaluator.evalError();
-      } else if (parsedArguments.getString("evalReport").equalsIgnoreCase(
-          "detailed")) {
-        evaluator.detailEvaluate();
-      }
-    } else {
-      evaluator.detailEvaluate();
-    }
-  }
-
-  /**
-   * Load the evaluation parameters of the CLI.
-   */
-  public final void loadEvalParameters() {
-    evalParser.addArgument("-m", "--model").required(true).help("Choose model");
-    evalParser.addArgument("-t", "--testSet").required(true)
-        .help("Input testset for evaluation");
-    evalParser.addArgument("--evalReport").required(false)
-        .choices("brief", "detailed", "error")
-        .help("Choose type of evaluation report; defaults to detailed");
-  }
-
-  /**
-   * Main access to the cross validation.
-   * 
-   * @throws IOException
-   *           input output exception if problems with corpora
-   */
-  public final void crossValidate() throws IOException {
-
-    final String paramFile = this.parsedArguments.getString("params");
-    final TrainingParameters params = InputOutputUtils
-        .loadTrainingParameters(paramFile);
-    final CrossValidator crossValidator = new CrossValidator(params);
-    crossValidator.crossValidate(params);
-  }
-
-  /**
-   * Create the main parameters available for training NERC models.
-   */
-  private void loadCrossValidateParameters() {
-    this.crossValidateParser.addArgument("-p", "--params").required(true)
-        .help("Load the Cross validation parameters file\n");
+    annotateParser.addArgument("-o", "--outputFormat").required(false)
+        .choices("naf", "conll00").setDefault("naf")
+        .help("Choose between NAF and conll format; it defaults to NAF.\n");
   }
 
   /**

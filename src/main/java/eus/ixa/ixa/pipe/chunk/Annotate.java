@@ -29,23 +29,44 @@ import eus.ixa.ixa.pipe.ml.StatisticalSequenceLabeler;
 import eus.ixa.ixa.pipe.ml.utils.Span;
 
 /**
- * @author ragerri
+ * Annotation class. Use this as example for using ixa-pipe-ml API for chunking.
  * 
+ * @author ragerri
+ * @version 2016-04-22
  */
 public class Annotate {
 
+  /**
+   * The sequence labeler.
+   */
   private StatisticalSequenceLabeler chunker;
 
+  /**
+   * Annotate constructor.
+   * 
+   * @param properties
+   *          the properties
+   * @throws IOException
+   *           if io problems
+   */
   public Annotate(Properties properties) throws IOException {
     chunker = new StatisticalSequenceLabeler(properties);
   }
 
-  public String chunkToKAF(KAFDocument kaf) throws IOException {
+  /**
+   * Produce chunks into NAF document.
+   * 
+   * @param kaf
+   *          the naf document
+   * @throws IOException
+   *           if io problems
+   */
+  public void chunkToKAF(KAFDocument kaf) throws IOException {
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
       /* Get an array of token forms from a list of WF objects. */
-      String posTags[] = new String[sentence.size()];
-      String tokens[] = new String[sentence.size()];
+      String[] posTags = new String[sentence.size()];
+      String[] tokens = new String[sentence.size()];
       String[] tokenIds = new String[sentence.size()];
       for (int i = 0; i < sentence.size(); i++) {
         tokens[i] = sentence.get(i).getForm();
@@ -56,18 +77,26 @@ public class Annotate {
       Span[] chunks = chunker.seqToSpans(tokens);
       for (int i = 0; i < chunks.length; i++) {
         String type = chunks[i].getType();
-        Integer start_index = chunks[i].getStart();
-        Integer end_index = chunks[i].getEnd();
+        Integer startIndex = chunks[i].getStart();
+        Integer endIndex = chunks[i].getEnd();
         // TODO use new functions and proper heads
         List<Term> chunkTerms = kaf.getTermsFromWFs(Arrays.asList(Arrays
-            .copyOfRange(tokenIds, start_index, end_index)));
+            .copyOfRange(tokenIds, startIndex, endIndex)));
         kaf.createChunk(chunkTerms.get(chunkTerms.size() - 1), type, chunkTerms);
       }
     }
-    return kaf.toString();
   }
 
-  public String annotateChunks(KAFDocument kaf) throws IOException {
+  /**
+   * Produce chunks into CoNLL 2000 format.
+   * 
+   * @param kaf
+   *          the NAF document
+   * @return the chunks in conll00 format
+   * @throws IOException
+   *           if io problems
+   */
+  public String annotateChunksToCoNLL00(KAFDocument kaf) throws IOException {
     StringBuilder sb = new StringBuilder();
     List<List<WF>> sentences = kaf.getSentences();
     for (List<WF> sentence : sentences) {
@@ -79,28 +108,12 @@ public class Annotate {
         List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
         posTags[i] = terms.get(i).getMorphofeat();
       }
-      Span[] chunks = chunker.seqToSpans(tokens);
-      String[] chunksArray = Span.spansToStrings(chunks, tokens);
-      String text = Span.chunksPrint(tokens, posTags, chunksArray);
-      sb.append(text).append("\n");
-    }
-    return sb.toString();
-  }
-
-  public String annotateChunksToCoNLL(KAFDocument kaf) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    List<List<WF>> sentences = kaf.getSentences();
-    for (List<WF> sentence : sentences) {
-      /* Get an array of token forms from a list of WF objects. */
-      String[] posTags = new String[sentence.size()];
-      String[] tokens = new String[sentence.size()];
-      for (int i = 0; i < sentence.size(); i++) {
-        tokens[i] = sentence.get(i).getForm();
-        List<Term> terms = kaf.getTermsBySent(sentence.get(i).getSent());
-        posTags[i] = terms.get(i).getMorphofeat();
+      String[] chunks = chunker.seqToStrings(tokens);
+      for (int i = 0; i < chunks.length; i++) {
+        sb.append(tokens[i]).append("\t").append(posTags[i]).append("\t")
+            .append(chunks[i]).append("\n");
       }
-      Span[] chunks = chunker.seqToSpans(tokens);
-      
+      sb.append("\n");
     }
     return sb.toString();
   }
