@@ -34,6 +34,11 @@ import org.jdom2.JDOMException;
 
 import com.google.common.io.Files;
 
+/**
+ * TCP server for chunking.
+ * @author ragerri
+ * @version 2016-04-22
+ */
 public class ChunkerServer {
 
   /**

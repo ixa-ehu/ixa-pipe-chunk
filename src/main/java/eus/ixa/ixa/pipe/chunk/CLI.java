@@ -313,6 +313,9 @@ public class CLI {
         .help("Choose output format; it defaults to NAF.\n");
   }
   
+  /**
+   * Load the client parameters.
+   */
   private void loadClientParameters() { 
     clientParser.addArgument("-p", "--port")
         .required(true)
@@ -325,7 +328,6 @@ public class CLI {
 
   /**
    * Generate Properties objects for CLI usage.
-   * 
    * @param model
    *          the model to perform the annotation
    * @param language
@@ -340,6 +342,14 @@ public class CLI {
     return annotateProperties;
   }
   
+  /**
+   * Generate properties for server usage.
+   * @param port the port
+   * @param model the model
+   * @param language the language
+   * @param outputFormat the output format
+   * @return the properties object
+   */
   private Properties setServerProperties(String port, String model, String language, String outputFormat) {
     Properties serverProperties = new Properties();
     serverProperties.setProperty("port", port);
