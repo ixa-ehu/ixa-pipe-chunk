@@ -25,6 +25,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -37,6 +40,8 @@ import net.sourceforge.argparse4j.inf.Subparsers;
 import org.jdom2.JDOMException;
 
 import com.google.common.io.Files;
+
+import eus.ixa.ixa.pipe.ml.utils.Flags;
 
 /**
  * Main class of ixa-pipe-chunk which uses ixa-pipe-ml API for chunking. The
@@ -79,6 +84,14 @@ public class CLI {
    * The parser that manages the tagging sub-command.
    */
   private Subparser annotateParser;
+  /**
+   * Parser to start TCP socket for server-client functionality.
+   */
+  private Subparser serverParser;
+  /**
+   * Sends queries to the serverParser for annotation.
+   */
+  private Subparser clientParser;
 
   /**
    * Construct a CLI object with the three sub-parsers to manage the command
@@ -87,6 +100,10 @@ public class CLI {
   public CLI() {
     annotateParser = subParsers.addParser("tag").help("Tagging CLI");
     loadAnnotateParameters();
+    serverParser = subParsers.addParser("server").help("Start TCP socket server");
+    loadServerParameters();
+    clientParser = subParsers.addParser("client").help("Send queries to the TCP socket server");
+    loadClientParameters();
   }
 
   /**
@@ -123,6 +140,10 @@ public class CLI {
       System.err.println("CLI options: " + parsedArguments);
       if (args[0].equals("tag")) {
         annotate(System.in, System.out);
+      } else if (args[0].equals("server")) {
+        server();
+      } else if (args[0].equals("client")) {
+        client(System.in, System.out);
       }
     } catch (ArgumentParserException e) {
       argParser.handleError(e);
@@ -172,7 +193,7 @@ public class CLI {
         "chunks", "ixa-pipe-chunk-" + Files.getNameWithoutExtension(model), 
         this.version + "-" + this.commit);
     newLp.setBeginTimestamp();
-    // annotate to KAF
+    // annotate
     if (outputFormat.equalsIgnoreCase("conll00")) {
       bwriter.write(annotator.annotateChunksToCoNLL00(kaf));
     } else {
@@ -183,18 +204,123 @@ public class CLI {
     bwriter.close();
     breader.close();
   }
+  
+  /**
+   * Set up the TCP socket for annotation.
+   */
+  public final void server() {
+
+    // load parameters into a properties
+    String port = parsedArguments.getString("port");
+    String model = parsedArguments.getString("model");
+    String outputFormat = parsedArguments.getString("outputFormat");
+    // language parameter
+    String lang = parsedArguments.getString("language");
+    Properties serverproperties = setServerProperties(port, model, lang, outputFormat);
+    new ChunkerServer(serverproperties);
+  }
+  
+  /**
+   * The client to query the TCP server for annotation.
+   * 
+   * @param inputStream
+   *          the stdin
+   * @param outputStream
+   *          stdout
+   */
+  public final void client(final InputStream inputStream,
+      final OutputStream outputStream) {
+
+    String host = parsedArguments.getString("host");
+    String port = parsedArguments.getString("port");
+    try (Socket socketClient = new Socket(host, Integer.parseInt(port));
+        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(
+            System.in, "UTF-8"));
+        BufferedWriter outToUser = new BufferedWriter(new OutputStreamWriter(
+            System.out, "UTF-8"));
+        BufferedWriter outToServer = new BufferedWriter(new OutputStreamWriter(
+            socketClient.getOutputStream(), "UTF-8"));
+        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(
+            socketClient.getInputStream(), "UTF-8"));) {
+
+      // send data to server socket
+      StringBuilder inText = new StringBuilder();
+      String line;
+      while ((line = inFromUser.readLine()) != null) {
+        inText.append(line).append("\n");
+      }
+      inText.append("<ENDOFDOCUMENT>").append("\n");
+      outToServer.write(inText.toString());
+      outToServer.flush();
+      
+      // get data from server
+      StringBuilder sb = new StringBuilder();
+      String kafString;
+      while ((kafString = inFromServer.readLine()) != null) {
+        sb.append(kafString).append("\n");
+      }
+      outToUser.write(sb.toString());
+    } catch (UnsupportedEncodingException e) {
+      //this cannot happen but...
+      throw new AssertionError("UTF-8 not supported");
+    } catch (UnknownHostException e) {
+      System.err.println("ERROR: Unknown hostname or IP address!");
+      System.exit(1);
+    } catch (NumberFormatException e) {
+      System.err.println("Port number not correct!");
+      System.exit(1);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
   /**
    * Generate the annotation parameter of the CLI.
    */
   private void loadAnnotateParameters() {
-    annotateParser.addArgument("-m", "--model").required(true)
+    annotateParser.addArgument("-m", "--model")
+        .required(true)
         .help("Choose model to perform chunk tagging.");
-    annotateParser.addArgument("-l", "--lang").choices("en").required(false)
+    annotateParser.addArgument("-l", "--lang")
+        .choices("en, eu")
+        .required(false)
         .help("Choose a language to perform annotation with ixa-pipe-chunk.");
-    annotateParser.addArgument("-o", "--outputFormat").required(false)
-        .choices("naf", "conll00").setDefault("naf")
-        .help("Choose between NAF and conll format; it defaults to NAF.\n");
+    annotateParser.addArgument("-o", "--outputFormat")
+        .required(false)
+        .choices("naf", "conll00")
+        .setDefault(Flags.DEFAULT_OUTPUT_FORMAT)
+        .help("Choose between NAF and conll00 format; it defaults to NAF.\n");
+  }
+  
+  /**
+   * Create the available parameters for POS tagging.
+   */
+  private void loadServerParameters() {
+    serverParser.addArgument("-p", "--port")
+        .required(true)
+        .help("Port to be assigned to the server.\n");
+    serverParser.addArgument("-m", "--model")
+        .required(true)
+        .help("It is required to provide a chunker model.");
+    serverParser.addArgument("-l", "--language")
+        .choices("en", "eu")
+        .required(true)
+        .help("Choose a language to perform annotation with ixa-pipe-chunk.");
+    serverParser.addArgument("-o", "--outputFormat")
+        .required(false)
+        .choices("naf", "conll00")
+        .setDefault(Flags.DEFAULT_OUTPUT_FORMAT)
+        .help("Choose output format; it defaults to NAF.\n");
+  }
+  
+  private void loadClientParameters() { 
+    clientParser.addArgument("-p", "--port")
+        .required(true)
+        .help("Port of the TCP server.\n");
+    clientParser.addArgument("--host")
+        .required(false)
+        .setDefault(Flags.DEFAULT_HOSTNAME)
+        .help("Hostname or IP where the TCP server is running.\n");
   }
 
   /**
@@ -212,5 +338,14 @@ public class CLI {
     annotateProperties.setProperty("model", model);
     annotateProperties.setProperty("language", language);
     return annotateProperties;
+  }
+  
+  private Properties setServerProperties(String port, String model, String language, String outputFormat) {
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty("port", port);
+    serverProperties.setProperty("model", model);
+    serverProperties.setProperty("language", language);
+    serverProperties.setProperty("outputFormat", outputFormat);
+    return serverProperties;
   }
 }
