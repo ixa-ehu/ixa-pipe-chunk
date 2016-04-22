@@ -168,14 +168,14 @@ public class CLI {
     }
     final Properties properties = setAnnotateProperties(model, lang);
     final Annotate annotator = new Annotate(properties);
+    KAFDocument.LinguisticProcessor newLp = kaf.addLinguisticProcessor(
+        "chunks", "ixa-pipe-chunk-" + Files.getNameWithoutExtension(model), 
+        this.version + "-" + this.commit);
+    newLp.setBeginTimestamp();
     // annotate to KAF
     if (outputFormat.equalsIgnoreCase("conll00")) {
       bwriter.write(annotator.annotateChunksToCoNLL00(kaf));
     } else {
-      KAFDocument.LinguisticProcessor newLp = kaf.addLinguisticProcessor(
-          "terms", "ixa-pipe-chunk-" + Files.getNameWithoutExtension(model)
-              + this.version + "-" + this.commit);
-      newLp.setBeginTimestamp();
       annotator.chunkToKAF(kaf);
       newLp.setEndTimestamp();
       bwriter.write(kaf.toString());
