@@ -2,7 +2,7 @@
 ixa-pipe-chunk
 ============
 
-ixa-pipe-chunk is a chunker currently offering pre-trained models for English. ixa-pipe-chunk is part of IXA pipes, a multilingual set of NLP tools developed by the IXA NLP Group [http://ixa2.si.ehu.es/ixa-pipes]. **Current version is 1.1.0**.
+ixa-pipe-chunk is a chunker currently offering pre-trained models for English. ixa-pipe-chunk is part of IXA pipes, a multilingual set of NLP tools developed by the IXA NLP Group [http://ixa2.si.ehu.es/ixa-pipes]. **Current version is 1.1.1**.
 
 Please go to [http://ixa2.si.ehu.es/ixa-pipes] for general information about the IXA
 pipes tools but also for **official releases, including source code and binary
@@ -45,8 +45,10 @@ ixa-pipe-chunk provides 4 basic functionalities:
    available (read trainParams.properties file for details).
 3. **eval**: evaluates a trained model with a given test set.
 4. **cross**: perform cross-validation evaluation.
+5. **server**: server mode.
+6. **client**: client mode.
 
-Each of these functionalities are accessible by adding (tag|train|eval|cross) as a
+Each of these functionalities are accessible by adding (tag|train|eval|cross|server|client) as a
 subcommand to ixa-pipe-chunk-$version.jar. Please read below and check the -help
 parameter:
 
@@ -59,7 +61,7 @@ java -jar target/ixa-pipe-chunk-$version.jar (tag|train|eval|cross) -help
 If you are in hurry, just execute:
 
 ````shell
-cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version.jar tag -m model.bin
+cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version-exec.jar tag -m model.bin
 ````
 
 If you want to know more, please follow reading.
@@ -75,13 +77,13 @@ You can get the necessary input for ixa-pipe-pos by piping it with
 There are several options to tag with ixa-pipe-chunk:
 
 + **model**: it is **required** to provide the model to do the tagging.
-+ **lang**: choose between en and es. If no language is chosen, the one specified
++ **lang**: choose between en and eu. If no language is chosen, the one specified
   in the NAF header will be used.
 
 **Tagging Example**:
 
 ````shell
-cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version.jar tag -m model.bin
+cat file.txt | ixa-pipe-tok | ixa-pipe-pos | java -jar $PATH/target/ixa-pipe-chunk-$version-exec.jar tag -m $model.bin
 ````
 
 ### Training
@@ -110,7 +112,7 @@ options:
 **Example**:
 
 ````shell
-java -jar target/ixa.pipe.chunk-$version.jar eval -m test-chunk.bin -l en -t test.data
+java -jar target/ixa.pipe.chunk-$version-exec.jar eval -m test-chunk.bin -l en -t test.data
 ````
 
 ## API
@@ -122,7 +124,7 @@ this dependency to your pom.xml:
 <dependency>
     <groupId>eus.ixa</groupId>
     <artifactId>ixa-pipe-chunk</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ````
 
@@ -233,7 +235,7 @@ mvn clean package
 This step will create a directory called target/ which contains various directories and files.
 Most importantly, there you will find the module executable:
 
-ixa-pipe-chunk-$version.jar
+ixa-pipe-chunk-$version-exec.jar
 
 This executable contains every dependency the module needs, so it is completely portable as long
 as you have a JVM 1.7 or newer installed.

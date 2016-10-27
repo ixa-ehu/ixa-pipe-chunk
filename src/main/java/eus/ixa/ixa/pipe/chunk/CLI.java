@@ -26,6 +26,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -104,6 +107,14 @@ public class CLI {
    */
   private final Subparser crossValidateParser;
   /**
+   * Parser to start TCP socket for server-client functionality.
+   */
+  private Subparser serverParser;
+  /**
+   * Sends queries to the serverParser for annotation.
+   */
+  private Subparser clientParser;
+  /**
    * Default beam size for decoding.
    */
   public static final int DEFAULT_BEAM_SIZE = 3;
@@ -122,6 +133,10 @@ public class CLI {
     this.crossValidateParser = this.subParsers.addParser("cross").help(
         "Cross validation CLI");
     loadCrossValidateParameters();
+    serverParser = subParsers.addParser("server").help("Start TCP socket server");
+    loadServerParameters();
+    clientParser = subParsers.addParser("client").help("Send queries to the TCP socket server");
+    loadClientParameters();
   }
 
   /**
@@ -164,11 +179,15 @@ public class CLI {
         train();
       } else if (args[0].equals("cross")) {
         crossValidate();
+      } else if (args[0].equals("server")) {
+        server();
+      } else if (args[0].equals("client")) {
+        client(System.in, System.out);
       }
     } catch (ArgumentParserException e) {
       argParser.handleError(e);
       System.out.println("Run java -jar target/ixa-pipe-chunk-" + version
-          + ".jar (tag|train|eval|cross) -help for details");
+          + ".jar (tag|train|eval|cross|server|client) -help for details");
       System.exit(1);
     }
   }
@@ -340,6 +359,110 @@ public class CLI {
     this.crossValidateParser.addArgument("-p", "--params").required(true)
         .help("Load the Cross validation parameters file\n");
   }
+  
+  /**
+   * Set up the TCP socket for annotation.
+   */
+  public final void server() {
+
+    // load parameters into a properties
+    String port = parsedArguments.getString("port");
+    String model = parsedArguments.getString("model");
+    String outputFormat = parsedArguments.getString("outputFormat");
+    // language parameter
+    String lang = parsedArguments.getString("language");
+    Properties serverproperties = setServerProperties(port, model, lang, outputFormat);
+    new ChunkerServer(serverproperties);
+  }
+  
+  /**
+   * The client to query the TCP server for annotation.
+   * 
+   * @param inputStream
+   *          the stdin
+   * @param outputStream
+   *          stdout
+   */
+  public final void client(final InputStream inputStream,
+      final OutputStream outputStream) {
+
+    String host = parsedArguments.getString("host");
+    String port = parsedArguments.getString("port");
+    try (Socket socketClient = new Socket(host, Integer.parseInt(port));
+        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(
+            System.in, "UTF-8"));
+        BufferedWriter outToUser = new BufferedWriter(new OutputStreamWriter(
+            System.out, "UTF-8"));
+        BufferedWriter outToServer = new BufferedWriter(new OutputStreamWriter(
+            socketClient.getOutputStream(), "UTF-8"));
+        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(
+            socketClient.getInputStream(), "UTF-8"));) {
+
+      // send data to server socket
+      StringBuilder inText = new StringBuilder();
+      String line;
+      while ((line = inFromUser.readLine()) != null) {
+        inText.append(line).append("\n");
+      }
+      inText.append("<ENDOFDOCUMENT>").append("\n");
+      outToServer.write(inText.toString());
+      outToServer.flush();
+      
+      // get data from server
+      StringBuilder sb = new StringBuilder();
+      String kafString;
+      while ((kafString = inFromServer.readLine()) != null) {
+        sb.append(kafString).append("\n");
+      }
+      outToUser.write(sb.toString());
+    } catch (UnsupportedEncodingException e) {
+      //this cannot happen but...
+      throw new AssertionError("UTF-8 not supported");
+    } catch (UnknownHostException e) {
+      System.err.println("ERROR: Unknown hostname or IP address!");
+      System.exit(1);
+    } catch (NumberFormatException e) {
+      System.err.println("Port number not correct!");
+      System.exit(1);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  
+  /**
+   * Create the available parameters for POS tagging.
+   */
+  private void loadServerParameters() {
+    serverParser.addArgument("-p", "--port")
+        .required(true)
+        .help("Port to be assigned to the server.\n");
+    serverParser.addArgument("-m", "--model")
+        .required(true)
+        .help("It is required to provide a chunker model.");
+    serverParser.addArgument("-l", "--language")
+        .choices("en", "eu")
+        .required(true)
+        .help("Choose a language to perform annotation with ixa-pipe-chunk.");
+    serverParser.addArgument("-o", "--outputFormat")
+        .required(false)
+        .choices("naf", "conll00")
+        .setDefault(Flags.DEFAULT_OUTPUT_FORMAT)
+        .help("Choose output format; it defaults to NAF.\n");
+  }
+  
+  /**
+   * Load the client parameters.
+   */
+  private void loadClientParameters() { 
+    clientParser.addArgument("-p", "--port")
+        .required(true)
+        .help("Port of the TCP server.\n");
+    clientParser.addArgument("--host")
+        .required(false)
+        .setDefault(Flags.DEFAULT_HOSTNAME)
+        .help("Hostname or IP where the TCP server is running.\n");
+  }
+
 
   /**
    * Generate Properties objects for CLI usage.
@@ -356,5 +479,22 @@ public class CLI {
     annotateProperties.setProperty("model", model);
     annotateProperties.setProperty("language", language);
     return annotateProperties;
+  }
+  
+  /**
+   * Generate properties for server usage.
+   * @param port the port
+   * @param model the model
+   * @param language the language
+   * @param outputFormat the output format
+   * @return the properties object
+   */
+  private Properties setServerProperties(String port, String model, String language, String outputFormat) {
+    Properties serverProperties = new Properties();
+    serverProperties.setProperty("port", port);
+    serverProperties.setProperty("model", model);
+    serverProperties.setProperty("language", language);
+    serverProperties.setProperty("outputFormat", outputFormat);
+    return serverProperties;
   }
 }
