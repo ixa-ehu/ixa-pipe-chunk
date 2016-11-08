@@ -53,7 +53,7 @@ subcommand to ixa-pipe-chunk-$version.jar. Please read below and check the -help
 parameter:
 
 ````shell
-java -jar target/ixa-pipe-chunk-$version.jar (tag|train|eval|cross) -help
+java -jar target/ixa-pipe-chunk-$version-exec.jar (tag|train|eval|cross) -help
 ````
 
 ### Tagging
@@ -94,7 +94,7 @@ argument. Every training option is documented in the template trainParams.proper
 **Example**:
 
 ````shell
-java -jar target/ixa.pipe.chunk-$version.jar train -p trainParams.properties
+java -jar target/ixa.pipe.chunk-$version-exec.jar train -p trainParams.properties
 ````
 
 ### Evaluation
