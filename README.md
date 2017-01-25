@@ -221,7 +221,7 @@ git clone https://github.com/ixa-ehu/ixa-pipe-chunk
 Download the models:
 
 ````shell
-wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models.tar.gz
+wget http://ixa2.si.ehu.es/ixa-pipes/models/chunk-models-1.1.0.tar.gz
 tar xvzf chunk-models.tar.gz
 ````
 
